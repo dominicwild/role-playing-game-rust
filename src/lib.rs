@@ -22,32 +22,34 @@ impl Player {
         Player {
             health: 100,
             mana: self.derive_mana(),
-            level: self.level
+            level: self.level,
         }
     }
 
     fn derive_mana(&self) -> Option<u32> {
-        let mut mana = None;
-        if self.level >= 10 {
-            mana = Some(100);
+        match self.level {
+            level if level >= 10 => Some(100),
+            _ => None
         }
-        mana
     }
 
     pub fn cast_spell(&mut self, mana_cost: u32) -> u32 {
-        if self.mana.is_none() {
-            self.decrease_health(mana_cost);
-            return 0;
-        }
-
-        if self.mana.unwrap() < mana_cost {
-            return 0;
-        }
-
-        self.mana = self.mana.map(|mana| mana - mana_cost);
-
-        let damage = mana_cost*2;
+        let damage = match self.mana {
+            Some(mana) if mana < mana_cost => 0,
+            Some(mana) => {
+                self.decrease_mana(mana_cost);
+                mana_cost * 2
+            }
+            None => {
+                self.decrease_health(mana_cost);
+                return 0;
+            }
+        };
         damage
+    }
+
+    fn decrease_mana(&mut self, mana_cost: u32) {
+        self.mana = self.mana.map(|mana| mana.saturating_sub(mana_cost));
     }
 
     fn decrease_health(&mut self, damage: u32) {
